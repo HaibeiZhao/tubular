@@ -12,7 +12,7 @@ function rcurve = resampleCurve( curve, ds )
 %   NPMitchell 2019
 
 % get distance increment
-ds_curve = vecnorm(diff(xyz), 2, 2) ;
+ds_curve = vecnorm(diff(curve), 2, 2) ;
 total_length = sum(ds_curve) ; 
 rcurve = curvspace(curve, total_length / ds) ;
 return 

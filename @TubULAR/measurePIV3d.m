@@ -165,7 +165,7 @@ else
     for ii=1:(ntps - 1)
         % Get timing
         timestr = sprintfm('%03d', (timePoints(ii) - t0) * tubi.timeInterval) ;
-        disp(['t = ' timestr])
+        disp(['tp = ' timestr ' ' tubi.timeUnits])
         tp = timePoints(ii) ;
         dt = (timePoints(ii + 1) - tp) * tubi.timeInterval ;
         
@@ -225,11 +225,11 @@ else
         
         % Get position in next timepoint in pixels (in XY pixel plane)
         % Clip the x position to the size of the image, and wrap the y position
-        x1 = x0 + uu ;
+        x1 = double(x0 + uu) ;
         eps = 1e-8 ;
         x1 = max(x1, 1.0 + eps) ;  % the minimum value of tm1XY(:, 1) is 1.0
         x1 = min(x1, Xsz0 - eps) ;
-        y1 = mod(y0 + vv, Ysz1) ;  
+        y1 = mod(double(y0 + vv), Ysz1) ;  
 
         % Two methods of obtaining the 3d vel evaluation pts. 
         % Barycenteric version:
@@ -259,6 +259,7 @@ else
         % Note: tm0f   will be [2*(nU-1)*(nV-1)*5] x 3
         % Note: tm0v2d will be [nU*(nV-1)*4 + nU*nV] x 2
         % Note: pt0    will be [#X0 * #Y0] x 3
+        % pt0 is the tail of the velocity vectors
         [tm0f, tm0v2d, tm0v3d, ~] = tileAnnularCutMesh(mesh0, tileCount);
         tm0XY = tubi.uv2XY(im0, tm0v2d, doubleCovered, umax0, vmax0) ;
         [pt0, fieldfaces, tr0] = interpolate2Dpts_3Dmesh(tm0f, tm0XY,...
@@ -295,15 +296,50 @@ else
         end
                 
         % Interpolate for next timepoint
+        % pt1 are the heads of the velocity vectors
         disp('Interpolating 3d vertices for tiled mesh 1')
         tileCount = [2, 2] ;
         [tm1f, tm1v2d, tm1v3d, ~] = tileAnnularCutMesh(mesh1, tileCount);
         tm1XY = tubi.uv2XY(im1, tm1v2d, doubleCovered, umax1, vmax1) ;
         pt1 = interpolate2Dpts_3Dmesh(tm1f, tm1XY, tm1v3d, [x1(:), y1(:)]) ;
+
+        
         
         % Ensure no NaNs in pt0 and pt1
+        %definitely go back to this
         if any(isnan(pt0(:))) || any(isnan(pt1(:)))
            % disp('inpainting NaNs in pt0 & pt1')
+           [pt1, fieldfaces1, tr1] = interpolate2Dpts_3Dmesh(tm1f, tm1XY, tm1v3d, [x1(:), y1(:)]) ;
+           nanfaces = find(isnan(fieldfaces1)) ; % these are the face indices that are NaN
+           disp('indices of tm1v3d with fieldfaces for vector heads that are NaNs: ')
+           disp(nanfaces)
+
+           % is tm1v2d ok?
+           assert(~any(isnan(tm1v2d(:))))
+           assert(~any(isnan(tm1XY(:))))
+
+           % where are the nan faces?
+           if ~isempty(nanfaces)
+               x1r = x1(:) ;
+               y1r = y1(:) ;
+               clf
+               set(gcf, 'visible', 'on')
+               plot(tm1XY(:, 1), tm1XY(:, 2), 'k.')
+               hold on;
+               plot(x1(:), y1(:), 'b.')
+               plot(x1r(nanfaces), y1r(nanfaces), 'ro')
+               title('evaluation locations for the velocity head points that are NaN')
+
+               disp('offending x coords:')
+               disp(x1r(nanfaces))
+                waitfor(gcf)
+    
+               plot(tm1v2d(:, 1)/max(tm1v2d(:, 1)), tm1v2d(:, 2), 'k.')
+               axis equal
+               title('tiled grid of mesh1 vertices in pullback space')
+               waitfor(gcf)
+
+           end
            error('why nans?')
            % pt0 = inpaint_nans(pt0) ;
            % pt1 = inpaint_nans(pt1) ;

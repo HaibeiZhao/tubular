@@ -28,7 +28,40 @@ function [acom,pcom,dcom, rot,trans] = computeAPDVCoords(tubi, opts)
 % processed, inferred from rot and trans
 %
 % Note that axisOrder is applying upon invoking getCurrentData()
-
+%
+% Parameters
+% ----------
+% opts : struct with optional fields
+%   aProbFileName : char
+%   pProbFileName : char
+%   dProbFileName : char
+%   ilastikOutputAxisOrder : 
+%   normal_step : float
+%   use_iLastik : bool
+%   use_MOI : bool, if use_iLastik==false
+%   use_APDVAxes : bool, if use_iLastik==use_MOI==false
+%   flipAP : bool, if use_APDVAxes==true
+%   flipDV : bool, if use_APDVAxes==true
+%   tref : int
+%     reference timepoint to use for APDV axis determination
+%   anteriorChannel : int
+%   posteriorChannel : int
+%   dorsalChannel : int 
+%   overwrite : bool
+%   preview : bool
+%   check_slices : bool
+%   thres : float (default=0.9)
+%       threshold probability for determining COM points from iLastik
+%   anterior_thres (default=thres)
+%       threshold probability for determining anterior COM point from 
+%       iLastik
+%   posterior_thres (default=thres)
+%       threshold probability for determining posterior COM point from 
+%       iLastik
+%   dorsal_thres (default=thres)
+%       threshold probability for determining dorsal COM point from 
+%       iLastik
+%
 
 %% Default options
 anteriorMethod = 'InsideOrNearestVertex' ;  % default is to use COM if COM 
@@ -38,7 +71,7 @@ normal_step = 1/tubi.ssfactor ;
 % Note that axisOrder is applying upon invoking getCurrentData()
 % axorder = tubi.data.axisOrder ;
 ilastikOutputAxisOrder = tubi.data.ilastikOutputAxisOrder ;
-thres = 0.5 ;
+thres = 0.9 ;
 ssfactor = tubi.ssfactor ;
 use_APDVAxes = [1 3] ;  % forcibly use these axes as the AP and DV axes, respectively
 flipAP = false ;   % only used if use_APDVAxes is true 
@@ -68,9 +101,27 @@ end
 if isfield(opts, 'normal_step')
     normal_step = opts.normal_step ;
 end
+% Thresholds for COM segmentation to find 3D points that orient the coords
 if isfield(opts, 'thres')
     thres = opts.thres ;
+    dorsal_thres = thres ; 
+    anterior_thres = thres ; 
+    posterior_thres = thres ; 
+else
+    dorsal_thres = thres ; 
+    anterior_thres = thres ; 
+    posterior_thres = thres ; 
 end
+if isfield(opts, 'anterior_thres')
+    anterior_thres = opts.anterior_thres ;
+end
+if isfield(opts, 'posterior_thres')
+    posterior_thres = opts.posterior_thres ;
+end
+if isfield(opts, 'dorsal_thres')
+    dorsal_thres = opts.dorsal_thres ;
+end
+
 if isfield(opts, 'use_iLastik')
     use_iLastik = opts.use_iLastik ;
 else
@@ -82,6 +133,7 @@ else
         'was found, so define the APDV axes based on the data axes and the mesh elongation axis'])
     end
 end
+
 if ~use_iLastik
     if isfield(opts, 'use_MOI')
         use_MOI = opts.use_MOI ;
@@ -124,17 +176,12 @@ preview = false ;
 check_slices = false ;
 
 % Unpack opts
-if isfield(opts, 'dorsal_thres')
-    dorsal_thres = opts.dorsal_thres ;
-else
-    dorsal_thres = 0.5 ;
-end
 if isfield(opts, 'anteriorChannel')
     anteriorChannel = opts.anteriorChannel ;
 else
     anteriorChannel = 1 ;
 end
-if isfield(opts, 'anteriorChannel')
+if isfield(opts, 'posteriorChannel')
     posteriorChannel = opts.posteriorChannel ;
 else
     posteriorChannel = 2 ;
@@ -380,10 +427,10 @@ if redo_rot_calc || overwrite
             options.check = preview ;
             disp('Extracting acom')
             options.color = 'red' ;
-            acom = com_region(adat, thres, options) ;
+            acom = com_region(adat, anterior_thres, options) ;
             disp('Extracting pcom')
             options.color = 'blue' ;
-            pcom = com_region(pdat, thres, options) ;
+            pcom = com_region(pdat, posterior_thres, options) ;
             clearvars options
             % [~, acom] = match_training_to_vertex(adat, thres, vertices, options) ;
             % [~, pcom] = match_training_to_vertex(pdat, thres, vertices, options) ;

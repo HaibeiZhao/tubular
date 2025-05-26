@@ -1,12 +1,13 @@
-function aux_generate_orbifold(cutMesh, ar, IV, imfn, Options, axisorder, save_as_stack)
+function aux_generate_orbifold(cutMesh, a, IV, imfn, Options, axisorder, save_as_stack)
+function aux_generate_orbifold(cutMesh, a, IV, imfn, Options, axisorder, save_as_stack)
 %AUX_GENERATE_ORBIFOLD(cutMesh, a, IV, imfn)
-% called by QuapSlap.generateCurrentPullbacks()
+% called by tubi.generateCurrentPullbacks()
 %
 % Parameters
 % ----------
 % cutMesh : struct
 %   mesh with fields f (faces), u (2d vertices), and v (3d vertices)
-% ar : float
+% a : float
 %   aspect ratio of width/height of image pullback
 % IV : 
 %   3d intensity data
@@ -18,6 +19,8 @@ function aux_generate_orbifold(cutMesh, ar, IV, imfn, Options, axisorder, save_a
 %   etc.  See MATLAB documentation for more information.
 %   Additional options as fields are
 %       - Options.imSize:       The size of the output image
+%       - Options.channelIndicesToMake 
+%                               List of 1-indexed channels to create
 %       - Options.baseSize:     The side length in pixels of the smallest
 %                               side of the output image when using the
 %                               tight mesh bounding box
@@ -30,7 +33,7 @@ function aux_generate_orbifold(cutMesh, ar, IV, imfn, Options, axisorder, save_a
 %       - Options.numLayers:    The number of onion layers to create
 %                               Format is [ (num +), (num -) ]
 %       - Options.layerSpacing: The spacing between adjacent onion layers
-%                               in units of pixels
+%                               in units of pixels  (default=5)
 %       - Options.preSmoothIter:   Number of iterations of Laplacian mesh
 %                               smoothing to run on the mesh prior to
 %                               vertex normal displacement (requires
@@ -114,8 +117,9 @@ if ~isfield(Options, 'EdgeColor')
 end
 if isfield(Options, 'imSize')
     if length(Options.imSize) > 1
-        disp("WARNING: Options.imSize is overwritten by parameter 'a'")
-        imsz = 1000 ;
+        error(["Options.imSize should be a scalar, and then the image ",... 
+            "width is given by imsz * parameter 'a'. ", ...
+            "Ie imsize specifies the image height"])
     else
         imsz = Options.imSize ;
     end
@@ -125,8 +129,16 @@ end
 if ~isfield(Options, 'yLim')
     Options.yLim = [0 1];
 end
-
-Options.imSize = ceil( imsz .* [ 1 ar ] ) ;
+if isfield(Options, 'channelIndicesToMake')
+    channelIndicesToMake = Options.channelIndicesToMake;
+else
+    if iscell(IV)
+        channelIndicesToMake = 1:length(IV) ;
+    else
+        channelIndicesToMake = 1;
+    end
+end
+Options.imSize = ceil( imsz .* [ 1 a ] ) ;
 
 % profile on
 % Create texture image
@@ -253,7 +265,15 @@ elseif save_as_stack
     disp('Saving using saveastiff()')
     tiffoptions.overwrite = true ;
     dat = uint8(255 * patchIm) ;
-    saveastiff( dat, imfn, tiffoptions) ;
+    if iscell(IV)
+        for ch = channelIndicesToMake
+            imfn_ch=[imfn,'_cIdx' num2str(ch) '.tif'];
+            saveastiff( squeeze(dat(:,:,ch,:)),imfn_ch,tiffoptions);
+        end
+    else
+        saveastiff( dat, imfn, tiffoptions) ;
+        saveastiff( squeeze(dat(:,:,3,:)),imfn,tiffoptions);
+    end
 elseif length(size(patchIm)) ==4 && size(patchIm, 3) == 3
     % Image is an RGB/FalseColor stack, take mip
     disp('Saving RGB MIP image')

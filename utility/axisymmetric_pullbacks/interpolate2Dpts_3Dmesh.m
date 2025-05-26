@@ -41,8 +41,15 @@ if isequal(size(uv), [2 1])
     uv = reshape(uv, [1, 2]) ;
 end
 
+uv = double(uv);  % uv must be a double matrix, so that the 
+
 tr0 = triangulation(faces, v2d) ;
 [fieldfaces, baryc0] = pointLocation(tr0, uv) ; 
+%An error occurred here saying that uv must be double matrix
+%about `pointLocation()`: 
+%tr0 is the triangulation (indeed)
+%uv is the points. We want to map them to 3D using barycentric
+%coordinates, by using `pointLocation`
 
 % Note: if we define mesh then we can use baryc to recover the position as:
 % uu_check = [sum(baryc0 .* mesh.u(mesh.f(fieldfaces, :), 1)', 2), ...

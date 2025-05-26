@@ -7,6 +7,11 @@ function cleanCylMeshes(tubi, cleanCylOptions)
 % cleanCylOptions : optional struct with optional fields
 %   overwrite : bool
 %   save_ims : bool
+%   followADandPDPtsInTime : bool
+%       when reassigning boundary dorsal vertices, pointmatch previous
+%       timepoint mesh AD/PD points to current clean mesh boundary rather
+%       than reassigning from current pre-cleaned mesh pointmatched to
+%       current clean mesh boundary.
 %
 % Returns
 % -------
@@ -26,11 +31,15 @@ if nargin < 2
 end
 overwrite = false ;
 save_ims = true ;
+followADandPDPtsInTime = true ;
 if isfield(cleanCylOptions, 'overwrite')
     overwrite = cleanCylOptions.overwrite ;
 end
 if isfield(cleanCylOptions, 'save_ims')
     save_ims = cleanCylOptions.save_ims ;
+end
+if isfield(cleanCylOptions, 'followADandPDPtsInTime')
+    followADandPDPtsInTime = cleanCylOptions.followADandPDPtsInTime ;
 end
 
 % Define filepaths. Some of these are less pretty to be
@@ -76,9 +85,14 @@ for t = tubi.xp.fileMeta.timePoints
         PDBase = ['/' tubi.fileBase.mesh '/pdorsal'];
         
         % Point-match the AD and PD points to nearest clean-boundary pt
+        %We should not do this!! This aux_adjust_dIDx function is also
+        %considering about previous tp. We should not make this comparison
+
+        %It seems that for adIDx, it is good to do this, but not for pdIDx
         [adIDx, pdIDx] = aux_adjust_dIDx(mesh, cylmesh, t, dpFile, ...
             ADBase, PDBase, cylMeshCDir, cylMeshCBase, ...
-            outadIDxfn, outpdIDxfn, tubi.xp.fileMeta.timePoints) ;
+            outadIDxfn, outpdIDxfn, tubi.xp.fileMeta.timePoints, ...
+            followADandPDPtsInTime) ;
 
         %% Save the 3d cut mesh with new indices
         % This is saving the cylinder meshes with no ears. Also adIDx

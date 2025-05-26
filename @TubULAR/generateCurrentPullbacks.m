@@ -10,6 +10,9 @@ function generateCurrentPullbacks(tubi, cutMesh, spcutMesh, ...
 % pbOptions : struct
 %   overwrite : bool (default=false)
 %       overwrite existing images on disk
+%   channelIndicesToMake : int array (default=1:length(IV) if iscell(IV))
+%       which channels to make pullbacks of. Currently implemented just for
+%       pullback stacks
 %   generate_sphi : bool (default=true)
 %       create pullbacks in sphi coords
 %   generate_relaxed : bool (default=false)
@@ -53,7 +56,7 @@ function generateCurrentPullbacks(tubi, cutMesh, spcutMesh, ...
 %       - pbOptions.numLayers:    The number of onion layers to create
 %                               Format is [ (num +), (num -) ]
 %       - pbOptions.layerSpacing: The spacing between adjacent onion layers
-%                               in units of pixels
+%                               in units of pixels (default=5)
 %       - pbOptions.smoothIter:   Number of iterations of Laplacian mesh
 %                               smoothing to run on the mesh prior to
 %                               vertex normal displacement (requires
@@ -100,6 +103,10 @@ if nargin > 4
         overwrite = pbOptions.overwrite ;
         pbOptions = rmfield(pbOptions, 'overwrite') ;
     end
+    
+    % Note: channelIndicesToMake is passed directly to 
+    % aux_generate_orbifold in pbOptions as a field. 
+
     if isfield(pbOptions, 'save_as_stack')
         save_as_stack = pbOptions.save_as_stack ;
         pbOptions = rmfield(pbOptions, 'save_as_stack') ;

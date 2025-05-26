@@ -52,6 +52,7 @@ function IV = getCurrentData(tubi, adjustIV, varargin)
             tubi.xp.loadTime(tubi.currentTime, tubi.useBioformats);
             tubi.xp.rescaleStackToUnitAspect();
             IV = tubi.xp.stack.image.apply() ;
+            disp(['tubi.currentTime = ' num2str(tubi.currentTime)])
         end
 
         if adjustIV

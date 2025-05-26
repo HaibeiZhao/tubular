@@ -1,5 +1,5 @@
-function [v3dsmM, nsmM] = smoothDynamicSPhiMeshes(QS, options)
-%SMOOTHDYNAMICSPHIMESHES(QS, options)
+function [v3dsmM, nsmM] = smoothDynamicSPhiMeshes(tubi, options)
+%SMOOTHDYNAMICSPHIMESHES(tubi, options)
 %   Using (s,phi) pullback cutmeshes, smooth coord system in time via
 %   simple triangular pulse averaging of positions in embedding space
 %   while preserving the pullback mesh. 
@@ -8,29 +8,39 @@ function [v3dsmM, nsmM] = smoothDynamicSPhiMeshes(QS, options)
 %
 % Parameters
 % ----------
-% QS : QuapSlap class instance
-%   Current QuapSlap object
+% tubi : TubULAR class instance
+%   Current TubULAR object
 % options : struct with fields
 %   width : int, default=4
-%       half-width of tripulse smoothing filter on output meshes
+%       half-width of tripulse smoothing filter on output meshes (ramps
+%       from zero to 1 to zero over a total of 2*width-1 timepoints)
+%       Example tripulse with a width of 4 is shown below:
+%
+%       weight
+%       1 ^     .
+%         |    / \
+%         |   /   \
+%       0 |  .     .
+%          -----------> time
+%            1234567
 %   overwrite : bool, default=false
 %       overwrite results on disk
-%   preivew : bool, default=QS.plotting.preview
+%   preivew : bool, default=tubi.plotting.preview
 %       display intermediate results
 %
 % NPMitchell 2020
 
-%% Unpack QS
-nU = QS.nU ;
-nV = QS.nV ;
-spcutMeshSmBase = QS.fullFileBase.spcutMeshSm ;
-spcutMeshSmRSBase = QS.fullFileBase.spcutMeshSmRS ;
-spcutMeshSmRSCBase = QS.fullFileBase.spcutMeshSmRSC ;
-timePoints = QS.xp.fileMeta.timePoints ;
-spcutMeshBase = QS.fullFileBase.spcutMesh ;
-[rot, trans] = QS.getRotTrans() ;
-resolution = QS.APDV.resolution ;
-flipy = QS.flipy ;
+%% Unpack tubi
+nU = tubi.nU ;
+nV = tubi.nV ;
+spcutMeshSmBase = tubi.fullFileBase.spcutMeshSm ;
+spcutMeshSmRSBase = tubi.fullFileBase.spcutMeshSmRS ;
+spcutMeshSmRSCBase = tubi.fullFileBase.spcutMeshSmRSC ;
+timePoints = tubi.xp.fileMeta.timePoints ;
+spcutMeshBase = tubi.fullFileBase.spcutMesh ;
+[rot, trans] = tubi.getRotTrans() ;
+resolution = tubi.APDV.resolution ;
+flipy = tubi.flipy ;
 
 %% Unpack options
 % Default options
@@ -188,8 +198,8 @@ if redo_meshsmooth
 
             % uvpcutMesh.raw.avgpts_pix = avgpts_pix ;
             % uvpcutMesh.raw.radius_pix = radius_pix ;
-            spcutMeshSm.avgpts_um = QS.xyz2APDV(avgpts_pix) ;
-            spcutMeshSm.radius_um = radius_pix * QS.APDV.resolution ;
+            spcutMeshSm.avgpts_um = tubi.xyz2APDV(avgpts_pix) ;
+            spcutMeshSm.radius_um = radius_pix * tubi.APDV.resolution ;
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             % Compute relaxed aspect ratio

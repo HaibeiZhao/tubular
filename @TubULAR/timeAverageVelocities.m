@@ -215,7 +215,8 @@ if ~exist(fileNames.v2dum, 'file') || ~exist(fileNames.v2d, 'file') || ...
         popts.timePoints = tp2do ;
         
         % PIV pathlines
-        [XXpath, YYpath] = tubi.pullbackPathlines(piv3d.x0, piv3d.y0, tp, popts) ;
+        % [XXpath, YYpath] = tubi.pullbackPathlines(piv3d.x0, piv3d.y0, tp, popts) ;
+        [XXpath, YYpath] = tubi.pullbackPathlines(double(piv3d.x0), double(piv3d.y0), tp, popts) ;
         % face pathlines
         if strcmp(tubi.piv.imCoords, 'sp_sme')
             im0 = imread(sprintfm(tubi.fullFileBase.im_sp_sme, tp)) ;

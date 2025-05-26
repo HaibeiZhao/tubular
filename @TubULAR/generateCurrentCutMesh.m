@@ -82,7 +82,9 @@ ricciOptions.t0 = t0 ;
 
 % Unpack parameters
 tt = tubi.currentTime ;
+disp(["This is tubi.currentTime" num2str(tt)])
 current_tidx = tubi.xp.tIdx(tt) ;
+disp(["This is current tIdx" num2str(current_tidx)])
 
 % use previous timepoint for twist comparison if we are marching forward in time
 if tt > t0

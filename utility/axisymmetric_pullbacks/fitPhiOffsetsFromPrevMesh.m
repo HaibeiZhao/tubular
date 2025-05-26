@@ -42,7 +42,7 @@ function [phi0_fit, phi0s] = fitPhiOffsetsFromPrevMesh(TF, TV2D, TV3D,...
 % save_phi0patch : bool
 %   save a patch colored by the phi0 motion deduced from the difference
 %   between previous and current DVhoop coordinates
-% smoothingMethod : str specifier ('none' or 'savgol')
+% smoothingMethod : str specifier ('none' or 'savgol' or 'movmean')
 %   how to smooth the computed phi0s (offsets in phi)
 % phiOpts : struct passed to phiOffsetsFromPrevMesh, with fields
 %   preview = preview ;

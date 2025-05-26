@@ -277,8 +277,8 @@ if min(idx0) > 1
         Lx = Lxs(tidx_match) ;
         Ly = Lys(tidx_match) ;
         [xa, ya] = QS.clipXY(xpiv(:) + uu(:), ypiv(:) + vv(:), Lx, Ly) ;
-        ui = scatteredInterpolant(xa, ya, uu(:), 'natural', 'nearest') ;
-        vi = scatteredInterpolant(xa, ya, vv(:), 'natural', 'nearest') ;
+        ui = scatteredInterpolant(double(xa), double(ya), double(uu(:)), 'natural', 'nearest') ;
+        vi = scatteredInterpolant(double(xa), double(ya), double(vv(:)), 'natural', 'nearest') ;
 
         % 2. Evaluate at XY(qq+1) non-transposed coords 
         xx = squeeze(XX(qq+1, :, :)) ;

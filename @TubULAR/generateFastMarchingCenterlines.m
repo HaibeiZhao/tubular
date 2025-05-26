@@ -66,7 +66,7 @@ xwidth = 16 ;                   % width of figure in cm
 ywidth = 10 ;                   % height of figure in cm
 skipErrors = true ;             % skip timepoints that return errors
 epsilon = eps ;                 % small value to give as weight of outside region
-useSavedAPDVMeshes = false ;    % load APDV meshes instead of transforming the data space meshes on the fly
+useSavedAPDVMeshes = true ;    % load APDV meshes instead of transforming the data space meshes on the fly
 meshAPDVFileName = tubi.fullFileBase.alignedMesh ; 
 permuteDataAxisOrder = 'xyz' ;
 
@@ -448,7 +448,14 @@ for tt = timePoints
                 daspect([1 1 1])
                 view(3); 
                 axis tight
-                plot3(path(2,:), path(1, :), path(3,:), '-')
+                try
+                   plot3(path(2,:), path(1, :), path(3,:), '-')
+                catch
+                    disp('Could not plot path. path = ')
+                    path
+                    error('Path finding failed. See above.')
+                end
+
                 trisurf(triangulation(fv.faces, fv.vertices/res), 'edgecolor', 'none', 'facealpha', 0.5)
                 view([0, ii*45])
             end

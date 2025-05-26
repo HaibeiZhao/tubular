@@ -60,6 +60,8 @@ function [apts_sm, ppts_sm, dpt] = computeAPDpoints(tubi, opts)
 %           (optional, default=[])
 %   - custom_ppts : a custom set of 3D posterior points
 %           (optional, default=[])
+%   - thres : threshold for extracting a connected component of high
+%   probability to define A and P and D points
 %       
 %
 % OUTPUTS
@@ -80,6 +82,7 @@ timePoints = tubi.xp.fileMeta.timePoints ;
 apdvoutdir = tubi.dir.cntrline ;
 meshDir = tubi.dir.mesh ;
 swapAP = false ;
+thres = 0.5 ;
 % axorder = tubi.data.axisOrder ; % NOTE: axisorder for texture_axis_order
                                 % invoked upon loading IV into tubi.currentData.IV
 ilastikOutputAxisOrder = tubi.data.ilastikOutputAxisOrder ;
@@ -135,6 +138,9 @@ if isfield(opts, 'swapAP')
     swapAP = opts.swapAP ;
 elseif isfield(opts, 'flipAP')
     swapAP = opts.flipAP ;
+end
+if isfield(opts, 'thres')
+    thres = opts.thres ;
 end
 
 % Default options
@@ -222,7 +228,7 @@ if exist(tubi.fileName.apdv, 'file') && ~overwrite
     end
 end
 if ~load_from_disk
-    disp('apts and/or ppts not already saved on disk. Compute them')
+    disp('apts and/or ppts not already saved on disk or overwrite==True. Compute them')
 end
 
 disp(['Load from disk? =>', num2str(load_from_disk)])
@@ -252,7 +258,6 @@ if ~load_from_disk || overwrite
                 %% Load the AP axis determination
                 msg = ['Computing apts, ppts for ' num2str(tt) ] ;
                 disp(msg)
-                thres = 0.5 ;
                 % load the probabilities for anterior posterior dorsal
                 afn = replace(aProbFileName, tubi.timeStampStringSpec, num2str(tt, tubi.timeStampStringSpec));
                 pfn = replace(pProbFileName, tubi.timeStampStringSpec, num2str(tt, tubi.timeStampStringSpec));
@@ -329,6 +334,18 @@ if ~load_from_disk || overwrite
                 % adat = permute(adat, axorder) ;
                 % pdat = permute(pdat, axorder) ;
 
+
+                % if preview
+                %     for xid = 1:1:size(adat, 1)
+                %         imagesc(squeeze(adat(xid, :,:))) ;
+                %         cb = colorbar ;
+                %         title(['x = ' num2str(xid)])
+                %         pause(0.01)
+                %     end
+                % end
+
+
+
                 options.check = preview_com ;
                 disp('Extracting acom from probability h5 data')
                 options.color = 'red' ;
@@ -349,7 +366,7 @@ if ~load_from_disk || overwrite
                     ppts(tidx, :)
 
                     clf
-                    meshfn = replace(tubi.fullFileBase.mesh, tt)
+                    meshfn = sprintf(tubi.fullFileBase.mesh, tt) ;
                     mesh = read_ply_mod(meshfn) ;
                     for ii = 1:3
                         subplot(1, 3, ii)
@@ -367,7 +384,7 @@ if ~load_from_disk || overwrite
                         end
                     end
                     sgtitle(['t = ' num2str(tt)])
-                    pause(0.001)
+                    pause(0.1)
                 end
 
                 % PLOT APD points on mesh
@@ -382,7 +399,7 @@ if ~load_from_disk || overwrite
                     for ii = 1:3
                         subplot(1, 3, ii)
                         meshfn = replace(tubi.fullFileBase.mesh, ...
-                            tubi.timeStampStringSpec, num2str(tt, tubi.fullFileBase.mesh)) ;
+                            tubi.timeStampStringSpec, num2str(tt, tubi.timeStampStringSpec)) ;
                         mesh = read_ply_mod(meshfn) ;
                         trisurf(triangulation(mesh.f, mesh.v), 'edgecolor', 'none', 'facealpha', 0.1)
                         hold on;
@@ -551,7 +568,7 @@ if ~load_from_disk || overwrite
         ssfactor = tubi.ssfactor ;
         tubi.setTime(tubi.t0set()) ;
         meshfn = replace(tubi.fullFileBase.mesh, tubi.timeStampStringSpec, ...
-            num2str(tubi.timeStampStringSpec, tubi.t0set())) ;
+            sprintf(tubi.timeStampStringSpec, tubi.t0set())) ;
         disp(['Loading mesh ' meshfn])
         mesh = read_ply_mod( meshfn );
         
